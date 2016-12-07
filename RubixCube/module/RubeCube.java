@@ -35,6 +35,8 @@ public class RubeCube {
         faces.add(new RubeFace(5, size));
     }
 
+    public int getSize() {return size; }
+
     public List<RubeFace> getFaces() {
         return faces;
     }
