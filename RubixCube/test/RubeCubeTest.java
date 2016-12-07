@@ -2,6 +2,9 @@ package RubixCube.test;
 
 import RubixCube.module.RubeCube;
 import RubixCube.module.RubeFace;
+import RubixCube.module.exceptions.ColumnOutOfBoundsException;
+import RubixCube.module.exceptions.NonPositiveSizeException;
+import RubixCube.module.exceptions.RowOutOfBoundsException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -20,18 +23,18 @@ public class RubeCubeTest {
     int[][] testFace;
 
     @Before
-    public void runBefore() {
-        cube = new RubeCube();
+    public void runBefore() throws NonPositiveSizeException {
+        cube = new RubeCube(3);
         testFace = new int[3][3];
     }
 
     @Test
-    public void testMoveLeftCol() {
+    public void testMoveLeftCol() throws ColumnOutOfBoundsException {
         int[][] face4Tiles = new int[3][3];
         face4Tiles = setFace(face4Tiles, 4);
         face4Tiles = setCol(face4Tiles, 8, 0);
         cube.getFaces().get(4).setTiles(face4Tiles); // alter this face
-        cube.moveLeftCol(1);
+        cube.moveColBy(0, 1);
         assertTrue(cube.getFaces().size() == 6);
         testFace = setFace(testFace, 0);
         testFace = setCol(testFace, 3, 0);
@@ -53,7 +56,7 @@ public class RubeCubeTest {
         testFace = setCol(testFace, 2, 0);
         assertTrue(Arrays.deepEquals(cube.getFaces().get(3).getTiles(), testFace));
 
-        cube.moveLeftCol(3);
+        cube.moveColBy(0, 3);
         assertTrue(cube.getFaces().size() == 6);
         testFace = setFace(testFace, 0);
         assertTrue(Arrays.deepEquals(cube.getFaces().get(0).getTiles(), testFace));
@@ -70,12 +73,12 @@ public class RubeCubeTest {
 
 
     @Test
-    public void testMoveRightCol() {
+    public void testMoveRightCol() throws ColumnOutOfBoundsException {
         int[][] face5Tiles = new int[3][3];
         face5Tiles = setFace(face5Tiles, 5);
         face5Tiles = setCol(face5Tiles, 8, 0);
         cube.getFaces().get(5).setTiles(face5Tiles); // alter this face
-        cube.moveRightCol(1);
+        cube.moveColBy(2, 1);
         assertTrue(cube.getFaces().size() == 6);
         testFace = setFace(testFace, 0);
         testFace = setCol(testFace, 3, 2);
@@ -96,7 +99,7 @@ public class RubeCubeTest {
         testFace = setCol(testFace, 2, 2);
         assertTrue(Arrays.deepEquals(cube.getFaces().get(3).getTiles(), testFace));
 
-        cube.moveRightCol(3);
+        cube.moveColBy(2, 3);
         assertTrue(cube.getFaces().size() == 6);
         testFace = setFace(testFace, 0);
         assertTrue(Arrays.deepEquals(cube.getFaces().get(0).getTiles(), testFace));
@@ -112,12 +115,12 @@ public class RubeCubeTest {
     }
 
     @Test
-    public void testMoveTopRow() {
+    public void testMoveTopRow() throws RowOutOfBoundsException {
         int[][] face1Tiles = new int[3][3];
         face1Tiles = setFace(face1Tiles, 1);
         face1Tiles = setCol(face1Tiles, 8, 0);
         cube.getFaces().get(1).setTiles(face1Tiles); // alter this face
-        cube.moveTopRow(1);
+        cube.moveRowBy(0, 1);
         assertTrue(cube.getFaces().size() == 6);
         testFace = setFace(testFace, 0);
         testFace = setRow(testFace, 4, 0);
@@ -139,7 +142,7 @@ public class RubeCubeTest {
         testFace = setRow(testFace, 2, 0);
         assertTrue(Arrays.deepEquals(cube.getFaces().get(4).getTiles(), testFace));
 
-        cube.moveTopRow(3);
+        cube.moveRowBy(0, 3);
         assertTrue(cube.getFaces().size() == 6);
         testFace = setFace(testFace, 0);
         assertTrue(Arrays.deepEquals(cube.getFaces().get(0).getTiles(), testFace));
@@ -155,12 +158,12 @@ public class RubeCubeTest {
     }
 
     @Test
-    public void testMoveBottomRow() {
+    public void testMoveBottomRow() throws RowOutOfBoundsException {
         int[][] face3Tiles = new int[3][3];
         face3Tiles = setFace(face3Tiles, 3);
         face3Tiles = setCol(face3Tiles, 8, 0);
         cube.getFaces().get(3).setTiles(face3Tiles); // alter this face
-        cube.moveBottomRow(1);
+        cube.moveRowBy(2, 1);
         assertTrue(cube.getFaces().size() == 6);
         testFace = setFace(testFace, 0);
         testFace = setRow(testFace, 4, 2);
@@ -182,7 +185,7 @@ public class RubeCubeTest {
         testFace = setRow(testFace, 2, 2);
         assertTrue(Arrays.deepEquals(cube.getFaces().get(4).getTiles(), testFace));
 
-        cube.moveBottomRow(3);
+        cube.moveRowBy(2, 3);
         assertTrue(cube.getFaces().size() == 6);
         testFace = setFace(testFace, 0);
         assertTrue(Arrays.deepEquals(cube.getFaces().get(0).getTiles(), testFace));
@@ -198,15 +201,15 @@ public class RubeCubeTest {
     }
 
     @Test
-    public void testTwoTilesSwapped() {
+    public void testTwoTilesSwapped() throws NonPositiveSizeException, ColumnOutOfBoundsException {
         List<RubeFace> faces = cube.getFaces();
-        RubeCube otherCube = new RubeCube();
+        RubeCube otherCube = new RubeCube(3);
         // Test same cubes
         assertFalse(cube.twoTilesSwapped(otherCube));
         assertFalse(otherCube.twoTilesSwapped(cube));
 
         // Test cubes with more than 2 swaps
-        cube.moveLeftCol(1);
+        cube.moveColBy(0, 1);
         assertFalse(cube.twoTilesSwapped(otherCube));
         assertFalse(otherCube.twoTilesSwapped(cube));
 
@@ -217,13 +220,13 @@ public class RubeCubeTest {
         tempFace[0][0] = b;
         tempFace[2][2] = a;
         faces.get(0).setTiles(tempFace);
-        otherCube.moveLeftCol(1);
+        otherCube.moveColBy(0, 1);
         assertTrue(cube.twoTilesSwapped(otherCube));
         assertTrue(otherCube.twoTilesSwapped(cube));
 
         // Test tiles swapped on different faces
-        cube = new RubeCube();
-        otherCube = new RubeCube();
+        cube = new RubeCube(3);
+        otherCube = new RubeCube(3);
         faces = cube.getFaces();
         tempFace = faces.get(1).getTiles();
         int[][] tempFace2 = faces.get(4).getTiles();
@@ -258,5 +261,16 @@ public class RubeCubeTest {
             testFace[row][col] = value;
         }
         return testFace;
+    }
+
+    private void printTestFace(int[][] aFace) {
+        String result = "";
+        for(int[] row : aFace) {
+            for(int tile : row) {
+                result = result + tile + " ";
+            }
+            result = result + "\n";
+        }
+        System.out.println(result);
     }
 }

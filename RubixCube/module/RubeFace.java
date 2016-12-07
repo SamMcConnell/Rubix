@@ -1,5 +1,7 @@
 package RubixCube.module;
 
+import RubixCube.module.exceptions.NonPositiveSizeException;
+
 import java.util.Arrays;
 
 /**
@@ -7,13 +9,16 @@ import java.util.Arrays;
  */
 public class RubeFace {
 
-    private int[][] tiles = new int[3][3];
+    private int[][] tiles;
+    private int size;
 
-    public RubeFace(int c) {
-        int d = c % 6;
-        for(int row=0;row<3;row++) {
-            for(int col=0;col<3;col++) {
-                tiles[row][col] = d;
+    public RubeFace(int value, int size) throws NonPositiveSizeException {
+        this.size = size;
+        tiles = new int[size][size];
+        int checkedValue = value % 6;
+        for(int row=0;row<size;row++) {
+            for(int col=0;col<size;col++) {
+                tiles[row][col] = checkedValue;
             }
         }
     }
@@ -28,18 +33,18 @@ public class RubeFace {
 
     // REQUIRES: i is a non-negative integer
     // MODIFIES: this
-    // EFFECTS: rotates this face 90 degrees clockwise
+    // EFFECTS: rotates this face 90 degrees clockwise per increment of i
     public void rotateClockwise(int i) {
         i %= 4;
         RubeFace tempFace = this.copyFace();
-        for(int row=0;row<3;row++) {
-            for(int col=0;col<3;col++) {
+        for(int row=0;row<size;row++) {
+            for(int col=0;col<size;col++) {
                 switch (i) {
-                    case 1: tiles[row][col] = tempFace.getTiles()[RubeCube.findIndex(col)][row];
+                    case 1: tiles[row][col] = tempFace.getTiles()[RubeCube.findIndex(col, size)][row];
                         break;
-                    case 2: tiles[row][col] = tempFace.getTiles()[RubeCube.findIndex(row)][RubeCube.findIndex(col)];
+                    case 2: tiles[row][col] = tempFace.getTiles()[RubeCube.findIndex(row, size)][RubeCube.findIndex(col, size)];
                         break;
-                    case 3: tiles[row][col] = tempFace.getTiles()[col][RubeCube.findIndex(row)];
+                    case 3: tiles[row][col] = tempFace.getTiles()[col][RubeCube.findIndex(row, size)];
                         break;
                     default: System.out.println("CAUTION - 0 value entered in RubeFace.rotateClockwise(int)");
                         break;
@@ -51,7 +56,13 @@ public class RubeFace {
     // EFFECTS: creates a copy of this face
     public RubeFace copyFace() {
         int[][] tilesCopy = new int[tiles.length][];
-        RubeFace result = new RubeFace(0);
+        RubeFace result = null;
+        try {
+            result = new RubeFace(0, size);
+        } catch (NonPositiveSizeException e) {
+            e.printStackTrace();
+            // Since this face was created with a valid size this should be impossible to reach
+        }
 
         for (int i = 0; i < tiles.length; i++) {
             tilesCopy[i] = new int[tiles[i].length];
@@ -82,7 +93,22 @@ public class RubeFace {
 
     @Override
     public String toString() {
-        String result = String.format("%d %d %d\n%d %d %d\n%d %d %d", tiles[0][0], tiles[0][1], tiles[0][2], tiles[1][0], tiles[1][1], tiles[1][2], tiles[2][0], tiles[2][1], tiles[2][2]);
+        String result = "";
+        int buffer = new StringBuffer().append(size*size-1).length();
+        for(int[] row : tiles) {
+            for(int tile : row) {
+                result = result + bufferSpace(buffer, tile) + tile + " ";
+            }
+            result = result + "\n";
+        }
+        return result;
+    }
+
+    private String bufferSpace(int buffer, int value) {
+        String result = "";
+        for(int i=0;i<(buffer-Integer.toString(value).length());i++) {
+            result = result + " ";
+        }
         return result;
     }
 }

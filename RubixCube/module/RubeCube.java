@@ -1,5 +1,9 @@
 package RubixCube.module;
 
+import RubixCube.module.exceptions.ColumnOutOfBoundsException;
+import RubixCube.module.exceptions.NonPositiveSizeException;
+import RubixCube.module.exceptions.RowOutOfBoundsException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,14 +23,16 @@ import java.util.List;
  */
 public class RubeCube {
     private List<RubeFace> faces = new ArrayList<RubeFace>();
+    private final int size;
 
-    public RubeCube() {
-        faces.add(new RubeFace(0));
-        faces.add(new RubeFace(1));
-        faces.add(new RubeFace(2));
-        faces.add(new RubeFace(3));
-        faces.add(new RubeFace(4));
-        faces.add(new RubeFace(5));
+    public RubeCube(int size) throws NonPositiveSizeException {
+        this.size = size;
+        faces.add(new RubeFace(0, size));
+        faces.add(new RubeFace(1, size));
+        faces.add(new RubeFace(2, size));
+        faces.add(new RubeFace(3, size));
+        faces.add(new RubeFace(4, size));
+        faces.add(new RubeFace(5, size));
     }
 
     public List<RubeFace> getFaces() {
@@ -39,113 +45,104 @@ public class RubeCube {
 
     // by default all movements operate from the perspective of face1
 
-    // REQUIRES: moveBy is not negative
-    // MODIFIES: this
-    // EFFECTS: moves the left column upwards by moveBy from the perspective of face1
-    public void moveLeftCol(int moveBy) {
-        RubeFace faceResult = new RubeFace(0);
+
+    /**
+     *   Move the column at colIndex by moveBy rotations upwards
+     **/
+    public void moveColBy(int colIndex, int moveBy) throws ColumnOutOfBoundsException {
+        moveBy %= 4;
+        if(colIndex >= size || colIndex < 0) throw new ColumnOutOfBoundsException();
+        moveCol(moveBy, colIndex);
+        if(colIndex == 0) {
+            faces.get(4).rotateClockwise(3*moveBy%4);
+        } else if (colIndex == size-1) {
+            faces.get(5).rotateClockwise(moveBy);
+        }
+    }
+
+    private void moveCol(int moveBy, int colIndex) {
+        RubeFace faceResult = null;
+        try {
+            faceResult = new RubeFace(0, size);
+        } catch (NonPositiveSizeException e) {
+            e.printStackTrace();  // impossible to reach
+        }
         int[][] face;
-        int[][] oldFaces = findColFaces(0,moveBy);
+        int[][] oldFaces = findColFaces(colIndex,moveBy);
         for(int i=0;i<4;i++) {
             face = faces.get(i).getTiles();
-            for(int j=0;j<3;j++) {
+            for(int row=0;row<size;row++) {
                 if(i == 2) {
-                    face[j][2] = oldFaces[i][j];
+                    face[row][findIndex(colIndex, size)] = oldFaces[i][row];
                 } else {
-                    face[j][0] = oldFaces[i][j];
+                    face[row][colIndex] = oldFaces[i][row];
                 }
             }
             faceResult.setTiles(face);
-            faces.set(i, faceResult.copyFace()); // THIS IS THE PROBLEM
+            faces.set(i, faceResult.copyFace());
         }
-        faces.get(4).rotateClockwise(3*moveBy%4);
     }
 
 
     // EFFECTS: returns an array of int arrays representing the tile values in the column 'col' of each face
     // EFFECTS: returns the new column tiles on each face that will be received after a rotation of moveBy in col column of face1
     public int[][] findColFaces(int col, int moveBy) {
-        int[][] tempTiles = new int[4][3];
+        int[][] tempTiles = new int[4][size];
         for(int face=0;face<4;face++){
-            for(int tile=0;tile<3;tile++) {
-                tempTiles[face][tile] = faces.get((face + 4 - moveBy)%4).getTiles()[tile][col%3];
+            for(int tile=0;tile<size;tile++) {
+                tempTiles[face][tile] = faces.get((face + 4 - moveBy)%4).getTiles()[tile][col%size];
                 if((face + 4 - moveBy)%4 == 2) {
                     // if face2 moves to this face...
-                    tempTiles[face][tile] = faces.get(2).getTiles()[findIndex(0)][findIndex(col)];
+                    tempTiles[face][tile] = faces.get(2).getTiles()[findIndex(0, size)][findIndex(col, size)];
                 }
                 if((face + moveBy)%4 == 2) {
                     // if this face moves to face2...
-                    tempTiles[2][tile] = faces.get(face).getTiles()[findIndex(tile)][col];
+                    tempTiles[2][tile] = faces.get(face).getTiles()[findIndex(tile, size)][col];
                 }
             }
         }
         return tempTiles;
     }
 
-    // EFFECTS: 0 -> 2, 1 -> 1, 2 -> 0
-    public static int findIndex(int i) {
-        return (((i+1)%3)*2)%3;
+    // EFFECTS: Given an index value, return the index equally far from the median index value in the opposite direction
+    public static int findIndex(int i, int size) {
+        return size - (i + 1);
     }
 
 
-
-    // REQUIRES: moveBy is not negative
-    // MODIFIES: this
-    // EFFECTS: moves the right column up or down according to the value of moveDown and updates all faces
-    public void moveRightCol(int moveBy) {
-        RubeFace faceResult = new RubeFace(0);
-        int[][] face;
-        int[][] oldFaces = findColFaces(2,moveBy);
-        for(int i=0;i<4;i++) {
-            face = faces.get(i).getTiles();
-            for(int j=0;j<3;j++) {
-                if(i == 2) {
-                    face[j][0] = oldFaces[i][j];
-                } else {
-                    face[j][2] = oldFaces[i][j];
-                }
-            }
-            faceResult.setTiles(face);
-            faces.set(i, faceResult.copyFace()); // THIS IS THE PROBLEM
+    /**
+     *   Move the rowumn at rowIndex by moveBy rotations upwards
+     **/
+    public void moveRowBy(int rowIndex, int moveBy) throws RowOutOfBoundsException {
+        moveBy %= 4;
+        if(rowIndex >= size || rowIndex < 0) throw new RowOutOfBoundsException();
+        moveRow(moveBy, rowIndex);
+        if(rowIndex == 0) {
+            faces.get(1).rotateClockwise(3*moveBy%4);
+        } else if (rowIndex == size-1) {
+            faces.get(3).rotateClockwise(moveBy);
         }
-        faces.get(5).rotateClockwise(moveBy);
     }
 
-    // REQUIRES: moveBy is not negative
-    // MODIFIES: this
-    // EFFECTS: moves the top row left or right according to the value of moveLeft and updates all faces
-    public void moveTopRow(int moveBy) {
-        RubeFace faceResult = new RubeFace(0);
+    private void moveRow(int moveBy, int rowIndex) {
+        RubeFace faceResult = null;
+        try {
+            faceResult = new RubeFace(0, size);
+        } catch (NonPositiveSizeException e) {
+            e.printStackTrace();  // impossible to reach
+        }
         int[][] face;
-        int[][] oldFaces = findRowFaces(0);
+        int[][] oldFaces = findRowFaces(rowIndex);
         for(int i=0;i<4;i++) {
             face = faces.get(convertForRow(i)).getTiles();
-            for(int j=0;j<3;j++) {
-                face[0][j] = oldFaces[(i+4-moveBy)%4][j];
+            for(int col=0;col<size;col++) {
+                face[rowIndex][col] = oldFaces[(i+4-moveBy)%4][col];
             }
             faceResult.setTiles(face);
             faces.set(convertForRow(i), faceResult.copyFace());
         }
-        faces.get(1).rotateClockwise(3*moveBy%4);
     }
 
-    // REQUIRES: moveBy is not negative
-    // MODIFIES: this
-    // EFFECTS: moves the bottom row left or right according to the value of moveLeft and updates all faces
-    public void moveBottomRow(int moveBy) {
-        RubeFace faceResult = new RubeFace(0);
-        int[][] face;
-        int[][] oldFaces = findRowFaces(2);
-        for(int i=0;i<4;i++) {
-            face = faces.get(convertForRow(i)).getTiles();
-            for(int j=0;j<3;j++) {
-                face[2][j] = oldFaces[(i+4-moveBy)%4][j];
-            }
-            faceResult.setTiles(face);
-            faces.set(convertForRow(i), faceResult.copyFace());
-        }
-        faces.get(3).rotateClockwise(moveBy);
-    }
 
 
     // EFFECTS: returns an array of int arrays representing the tile values in the row 'row' of each face

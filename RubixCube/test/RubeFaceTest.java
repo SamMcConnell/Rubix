@@ -1,6 +1,7 @@
 package RubixCube.test;
 
 import RubixCube.module.RubeFace;
+import RubixCube.module.exceptions.NonPositiveSizeException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,19 +15,22 @@ public class RubeFaceTest {
     int[][] tiles = new int[3][3];
 
     @Before
-    public void runBefore() {
-        face = new RubeFace(1);
+    public void runBefore() throws NonPositiveSizeException {
+        face = new RubeFace(1, 3);
         resetFace();
+        System.out.println("Before\n-----\n" + face);
     }
 
     @Test
     public void testCopyFace() {
+        System.out.println("Testing copying face...");
         System.out.println("-----\n" + face);
         assertEquals(face, face.copyFace());
     }
 
     @Test
-    public void testRotateFace() {
+    public void testRotateFace() throws NonPositiveSizeException {
+        System.out.println("Testing rotating face...");
         int[][] result = new int[3][3];
         result[0][0] = 6;
         result[0][1] = 3;
@@ -37,7 +41,7 @@ public class RubeFaceTest {
         result[2][0] = 8;
         result[2][1] = 5;
         result[2][2] = 2;
-        RubeFace resultFace = new RubeFace(0);
+        RubeFace resultFace = new RubeFace(0 , 3);
         resultFace.setTiles(result);
         face.rotateClockwise(1);
         System.out.println("-----\n" + face);
