@@ -80,7 +80,11 @@ public class RubeCube {
                     face[row][colIndex] = oldFaces[i][row];
                 }
             }
-            faceResult.setTiles(face);
+            try {
+                faceResult.setTiles(face);
+            } catch (NullPointerException e) {
+                throw new NullPointerException("setTiles passed a null 'face' in RubeCube.moveCol");
+            }
             faces.set(i, faceResult.copyFace());
         }
     }
@@ -88,7 +92,7 @@ public class RubeCube {
 
     // EFFECTS: returns an array of int arrays representing the tile values in the column 'col' of each face
     // EFFECTS: returns the new column tiles on each face that will be received after a rotation of moveBy in col column of face1
-    public int[][] findColFaces(int col, int moveBy) {
+    private int[][] findColFaces(int col, int moveBy) {
         int[][] tempTiles = new int[4][size];
         for(int face=0;face<4;face++){
             for(int tile=0;tile<size;tile++) {
@@ -250,7 +254,7 @@ public class RubeCube {
     @Override
     public boolean equals(Object rc) {
         if(!(rc instanceof RubeCube)){
-            System.out.println("CAUTION - RubeCub.equals(Object) called with a non-RubeCube parameter");
+            System.out.println("CAUTION - RubeCube.equals(Object) called with a non-RubeCube parameter");
             return false;
         }
         RubeCube otherCube = (RubeCube) rc;
