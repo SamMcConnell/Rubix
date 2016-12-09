@@ -1,7 +1,7 @@
 package RubixCube.model3d;
 
 /**
- * Created by sam5binny on 2016-12-07.
+ * Enumeration for the x, y, and z axes
  */
 public enum  Dimension {
     X, Y, Z

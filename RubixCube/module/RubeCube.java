@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by sam5binny on 2016-10-07.
  * An unfolded cube would have these orientations for each face with respect to face 1
  * CAUTION - In the code all faces are referred to by their zero-based indices
  *                ___

@@ -1,12 +1,17 @@
 package RubixCube.model3d;
 
+import RubixCube.model3d.exceptions.NullMainFrameException;
 import RubixCube.module.RubeCube;
-import com.sun.j3d.utils.geometry.Cone;
+import RubixCube.module.exceptions.NonPositiveSizeException;
+import com.sun.j3d.utils.geometry.Sphere;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 
-import javax.media.j3d.QuadArray;
-import javax.media.j3d.Transform3D;
-import javax.media.j3d.TransformGroup;
+import javax.media.j3d.BoundingSphere;
+import javax.media.j3d.BranchGroup;
+import javax.media.j3d.DirectionalLight;
+import javax.vecmath.Color3f;
+import javax.vecmath.Point3d;
+import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
 import java.util.ArrayList;
@@ -19,14 +24,45 @@ import static RubixCube.model3d.Dimension.*;
  */
 public class MainFrame {
     private RubeCube cube;
-    private List<List<List<QuadArray>>> cube3D = new ArrayList<List<List<QuadArray>>>();
+    private List<List<List<Tile>>> cube3D;
+    private static MainFrame mainFrame;
+    private BranchGroup group;
 
-    public MainFrame(RubeCube cube) {
+    private MainFrame(RubeCube cube) {
+        cube3D = new ArrayList<List<List<Tile>>>();
+        group = new BranchGroup();
         this.cube = cube;
         generateCube();
 
+        Sphere sphere = new Sphere(0.1f);
+        group.addChild(sphere);
+
+        Color3f light1Color = new Color3f(1.0f, 1.0f, 1.0f);
+        BoundingSphere bounds = new BoundingSphere(new Point3d(0.0,0.0,0.0), 100.0);
+        Vector3f light1Direction = new Vector3f(4.0f, -7.0f, -12.0f);
+        DirectionalLight light1 = new DirectionalLight(light1Color, light1Direction);
+        light1.setInfluencingBounds(bounds);
+        group.addChild(light1);
+
+
         SimpleUniverse universe = new SimpleUniverse();
+        universe.addBranchGraph(group);
+        universe.getViewingPlatform().setNominalViewingTransform();
         // Get rotatable cube on screen
+    }
+
+    public static MainFrame getInstance() throws NullMainFrameException {
+        if (mainFrame == null) {
+            throw new NullMainFrameException();
+        }
+        return mainFrame;
+    }
+
+    public static MainFrame getInstance(RubeCube aCube) {
+        if (mainFrame == null) {
+            mainFrame = new MainFrame(aCube);
+        }
+        return mainFrame;
     }
 
     /**
@@ -49,6 +85,8 @@ public class MainFrame {
      * keys[2] - the last coordinate component key for the remaining axis
      * @param axis - the dimension that we would like to generate keys for
      */
+
+    // TODO: Update keys[1] and keys[2] so that they always point to rows and columns respectively
     private int[] getKeys(Dimension axis) {
         int[] keys = new int[3];
         switch (axis) {
@@ -70,11 +108,17 @@ public class MainFrame {
         return keys;
     }
 
-    private ArrayList<List<QuadArray>> generateDim(int size, Dimension dim, boolean isPositive) {
+    /**
+     * @param size - the length of the rows and columns of the face
+     * @param dim - the dimension that the face will be perpendicular to
+     * @param isPositive - if positive construct face in positive grid space, otherwise negative grid space
+     * @return the size-by-size face of the cube perpendicular to the axis of dim
+     */
+    private ArrayList<List<Tile>> generateDim(int size, Dimension dim, boolean isPositive) {
         int[] keys = getKeys(dim);
         float[] point = new float[3];
         float start = round(size/2, 1);
-        ArrayList<List<QuadArray>> result = new ArrayList<List<QuadArray>>();
+        ArrayList<List<Tile>> result = new ArrayList<List<Tile>>();
         if(isPositive) {
             point[keys[0]] = start;
         } else {
@@ -83,9 +127,11 @@ public class MainFrame {
         point[keys[1]] = -1*start;
         point[keys[2]] = -1*start;
         for(int row=0;row<size;row++) {
-            ArrayList<QuadArray> tiles = new ArrayList<QuadArray>();
+            ArrayList<Tile> tiles = new ArrayList<Tile>();
             for(int col=0;col<size;col++) {
-                tiles.add(generatePlane(dim, point));
+                Tile tile = new Tile(dim, new Point3f(point));
+                group.addChild(tile);
+                tiles.add(tile);
                 point[keys[1]]++;
             }
             point[keys[2]]++;
@@ -94,51 +140,6 @@ public class MainFrame {
         return result;
     }
 
-    /**
-     * Produce a square,
-     *
-     * @param axis - the axis that the plane is orthogonal to
-     * @param point - an array of 3 coordinates describing the x, y, and z values of a point
-     * @return square, unit-length plane along the axis provided using point as the vector with the lowest coordinates.
-     */
-    private QuadArray generatePlane(Dimension axis, float[] point) {
-        QuadArray result = new QuadArray(4, QuadArray.COLOR_3 | QuadArray.COORDINATES | QuadArray.TEXTURE_COORDINATE_2);
-        float[] coordinate = point.clone();
-        int nextIndex = 0;
-
-        result.setCoordinate(nextIndex++, coordinate.clone());
-        if(axis == Y || axis == Z) {
-            coordinate[0]++;
-            result.setCoordinate(nextIndex++, coordinate.clone());
-            coordinate[0]--;
-        }
-        if(axis == X || axis == Z) {
-            coordinate[1]++;
-            result.setCoordinate(nextIndex++, coordinate.clone());
-            coordinate[1]--;
-        }
-        if(axis == X || axis == Y) {
-            coordinate[2]++;
-            result.setCoordinate(nextIndex++, coordinate.clone());
-            coordinate[2]--;
-        }
-        if(axis == X) {
-            coordinate[1]++;
-            coordinate[2]++;
-            result.setCoordinate(nextIndex, coordinate.clone());
-        }
-        if(axis == Y) {
-            coordinate[0]++;
-            coordinate[2]++;
-            result.setCoordinate(nextIndex, coordinate.clone());
-        }
-        if(axis == Z) {
-            coordinate[0]++;
-            coordinate[1]++;
-            result.setCoordinate(nextIndex, coordinate.clone());
-        }
-        return result;
-    }
 
     private static float round (float value, int precision) {
         int scale = (int) Math.pow(10, precision);
@@ -146,5 +147,11 @@ public class MainFrame {
     }
 
     public static void main(String[] args) {
+        try {
+            RubeCube theCube = new RubeCube(5);
+            new MainFrame(theCube);
+        } catch (NonPositiveSizeException e) {
+            e.printStackTrace();
+        }
     }
 }
