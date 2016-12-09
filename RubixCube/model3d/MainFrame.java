@@ -32,12 +32,15 @@ public class MainFrame {
         cube3D = new ArrayList<List<List<Tile>>>();
         group = new BranchGroup();
         this.cube = cube;
-        generateCube();
+        //generateCube();
 
-        Sphere sphere = new Sphere(0.1f);
+        Tile tile = new Tile(Z, new Point3f(0f, 0f, 0f));
+        group.addChild(tile);
+
+        Sphere sphere = new Sphere(.5f);
         group.addChild(sphere);
 
-        Color3f light1Color = new Color3f(1.0f, 1.0f, 1.0f);
+        Color3f light1Color = new Color3f(1.0f, 0.5f, 1.0f);
         BoundingSphere bounds = new BoundingSphere(new Point3d(0.0,0.0,0.0), 100.0);
         Vector3f light1Direction = new Vector3f(4.0f, -7.0f, -12.0f);
         DirectionalLight light1 = new DirectionalLight(light1Color, light1Direction);
@@ -117,7 +120,7 @@ public class MainFrame {
     private ArrayList<List<Tile>> generateDim(int size, Dimension dim, boolean isPositive) {
         int[] keys = getKeys(dim);
         float[] point = new float[3];
-        float start = round(size/2, 1);
+        float start = round(size/2f, 1);
         ArrayList<List<Tile>> result = new ArrayList<List<Tile>>();
         if(isPositive) {
             point[keys[0]] = start;
@@ -134,6 +137,7 @@ public class MainFrame {
                 tiles.add(tile);
                 point[keys[1]]++;
             }
+            point[keys[1]] = -1*start;
             point[keys[2]]++;
             result.add(tiles);
         }
@@ -148,7 +152,7 @@ public class MainFrame {
 
     public static void main(String[] args) {
         try {
-            RubeCube theCube = new RubeCube(5);
+            RubeCube theCube = new RubeCube(3);
             new MainFrame(theCube);
         } catch (NonPositiveSizeException e) {
             e.printStackTrace();

@@ -39,11 +39,8 @@ public class Tile extends Shape3D {
 
     private Appearance createAppearance() {
         Appearance appear = new Appearance();
-        //Material material = new Material();
-        //appear.setMaterial(material);
         Color3f col = new Color3f(0.0f, 1.0f, 1.0f);
         ColoringAttributes ca = new ColoringAttributes(col, ColoringAttributes.NICEST);
-        //appear.setColoringAttributes(ca);
 
         return appear;
     }
@@ -80,5 +77,22 @@ public class Tile extends Shape3D {
                 break;
         }
         return new Point3f(x,y,z);
+    }
+
+    @Override
+    public String toString() {
+        String result = "A B C D\n";
+        for(int i=0; i<4; i++){
+            result = result + "X: " + ((QuadArray) getGeometry()).getCoordRef3f()[i].getX() + "    ";
+        }
+        result = result + "\n";
+        for(int i=0; i<4; i++){
+            result = result + "Y: " + ((QuadArray) getGeometry()).getCoordRef3f()[i].getY() + "    ";
+        }
+        result = result + "\n";
+        for(int i=0; i<4; i++){
+            result = result + "Z: " + ((QuadArray) getGeometry()).getCoordRef3f()[i].getZ() + "    ";
+        }
+        return result;
     }
 }
