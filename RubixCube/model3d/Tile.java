@@ -1,5 +1,6 @@
 package RubixCube.model3d;
 
+
 import javax.media.j3d.*;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
@@ -9,21 +10,29 @@ import static RubixCube.model3d.Dimension.*;
 
 
 /**
- * Created by sam5binny on 2016-12-08.
+ * A class which creates planes
  */
 public class Tile extends Shape3D {
+    private static int colour;
+    private static float scl;
+    private static final float WIDTH = 1.1f;
 
-    Tile(Point3f a, Point3f b, Point3f c, Point3f d){
+    Tile(Point3f a, Point3f b, Point3f c, Point3f d, int size) {
+        scl = WIDTH/size;
         this.setGeometry(createGeometry(a, b, c, d));
         this.setAppearance(createAppearance());
     }
 
-    Tile(Dimension axis, Point3f A) {
+    // No matter the size of the cube, always display it so that it spans between
+
+    Tile(Dimension axis, Point3f A, int size) {
+        scl = WIDTH/size;
         ArrayList<Point3f> tileCoordinates = getTileCoordinates(axis, A);
         this.setGeometry(createGeometry(tileCoordinates.get(0),
                                         tileCoordinates.get(1),
                                         tileCoordinates.get(2),
                                         tileCoordinates.get(3)));
+        colour += 50;
         this.setAppearance(createAppearance());
     }
 
@@ -39,9 +48,12 @@ public class Tile extends Shape3D {
 
     private Appearance createAppearance() {
         Appearance appear = new Appearance();
-        Color3f col = new Color3f(0.0f, 1.0f, 1.0f);
+        Color3f col = new Color3f((colour>>8)/15f, ((colour>>4)&15)/15f, (colour&15)/15f);
         ColoringAttributes ca = new ColoringAttributes(col, ColoringAttributes.NICEST);
-
+        PolygonAttributes pa = new PolygonAttributes();
+        pa.setCullFace(PolygonAttributes.CULL_NONE);
+        appear.setPolygonAttributes(pa);
+        appear.setColoringAttributes(ca);
         return appear;
     }
 
@@ -69,30 +81,13 @@ public class Tile extends Shape3D {
         float y = point.getY();
         float z = point.getZ();
         switch (dim) {
-            case X: x++;
+            case X: x += scl;
                 break;
-            case Y: y++;
+            case Y: y += scl;
                 break;
-            case Z: z++;
+            case Z: z += scl;
                 break;
         }
         return new Point3f(x,y,z);
-    }
-
-    @Override
-    public String toString() {
-        String result = "A B C D\n";
-        for(int i=0; i<4; i++){
-            result = result + "X: " + ((QuadArray) getGeometry()).getCoordRef3f()[i].getX() + "    ";
-        }
-        result = result + "\n";
-        for(int i=0; i<4; i++){
-            result = result + "Y: " + ((QuadArray) getGeometry()).getCoordRef3f()[i].getY() + "    ";
-        }
-        result = result + "\n";
-        for(int i=0; i<4; i++){
-            result = result + "Z: " + ((QuadArray) getGeometry()).getCoordRef3f()[i].getZ() + "    ";
-        }
-        return result;
     }
 }
