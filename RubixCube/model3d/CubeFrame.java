@@ -29,9 +29,7 @@ public class CubeFrame extends Applet implements KeyListener{
     private TransformGroup objTrans;
     private Transform3D trans = new Transform3D();
     private SimpleUniverse universe;
-    private float xAngle = 0f;
     private final float dAngle = 0.05f;
-    private float yAngle = 0f;
 
     public static final float WIDTH = 1.1f;
     private static float SCL;
@@ -194,6 +192,73 @@ public class CubeFrame extends Applet implements KeyListener{
         return (float) Math.round(value * scale) / scale;
     }
 
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+    }
+
+    /**
+     * updates the rotation transform (trans) so that global (rather than local) coordinates can be used as input
+     * @param rotationVector describes the desired axis of rotation in global coordinates
+     * @param isPositive determines whether the angle of rotation will be positive or negative
+     */
+    private void updateRotation(Point3f rotationVector, boolean isPositive) {
+        int sign = 1;
+        if(!isPositive) sign = -1;
+        Transform3D temp = new Transform3D();
+        temp.invert(trans);
+        temp.transform(rotationVector);
+        temp.setRotation(new AxisAngle4f(rotationVector.getX(),rotationVector.getY(),rotationVector.getZ(), sign*dAngle));
+        trans.mul(temp);
+        objTrans.setTransform(trans);
+    }
+
+    /**
+     * Used to reset the rotation transform (trans) of the cube
+     */
+    private void updateRotation(){
+        trans = new Transform3D();
+        objTrans.setTransform(trans);
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        //Invoked when a key has been pressed.
+        //need to find vector that is the local rotation axis rotated by the inverse of trans
+
+        Point3f rotationXVector = new Point3f(0f,1f,0f);
+        Point3f rotationYVector = new Point3f(1f,0f,0f);
+        if (e.getKeyCode()==KeyEvent.VK_LEFT) {
+            updateRotation(rotationXVector, false);
+        }
+        if (e.getKeyCode()==KeyEvent.VK_RIGHT) {
+            updateRotation(rotationXVector, true);
+        }
+        if (e.getKeyCode()==KeyEvent.VK_UP) {
+            updateRotation(rotationYVector, false);
+        }
+        if (e.getKeyCode()==KeyEvent.VK_DOWN) {
+            updateRotation(rotationYVector, true);
+        }
+        if (e.getKeyCode()==KeyEvent.VK_SPACE) {
+            updateRotation();
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        float[] matrix = new float[16];
+        trans.get(matrix);
+        float[] result = new float[3];
+        result[0] = matrix[9] - matrix[6];
+        result[1] = matrix[2] - matrix[8];
+        result[2] = matrix[4] - matrix[1];
+        System.out.println("------------------------\n"+trans);
+        System.out.println("Axis of rotation:\n"+
+                "X: "+result[0]+"\nY: "+result[1]+"\nZ: "+result[2]);
+    }
+
+
     public static void main(String[] args) {
         try {
             RubeCube theCube = new RubeCube(3);
@@ -204,65 +269,9 @@ public class CubeFrame extends Applet implements KeyListener{
         }
         try {
             getInstance().addKeyListener(getInstance());
-            MainFrame mf = new MainFrame(getInstance(), 256, 256);
+            MainFrame mf = new MainFrame(getInstance(), 1024, 1024);
         } catch (NullCubeFrameException e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public void keyTyped(KeyEvent e) {
-
-    }
-
-    private void updateRotation() {
-        Transform3D xTrans = new Transform3D();
-        Transform3D yTrans = new Transform3D();
-        xTrans.setRotation(new AxisAngle4f(0f,1f,0f, xAngle));
-        float[] yRot = yRotAxis(xAngle);
-        // set the axis of rotation of Y to accommodate for rotation from x
-        yTrans.setRotation(new AxisAngle4f(yRot[0],yRot[1],0f, yAngle));
-        trans.mul(yTrans, xTrans);
-        objTrans.setTransform(trans);
-    }
-
-    private float[] yRotAxis(float angle) {
-        float[] result = new float[2];
-        float sin = (float) Math.sin(-angle);
-        float cos = (float) Math.cos(-angle);
-        result[0] = cos-sin;
-        result[1] = cos+sin;
-        return result;
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        //Invoked when a key has been pressed.
-        if (e.getKeyCode()==KeyEvent.VK_LEFT) {
-            xAngle -= dAngle;
-            updateRotation();
-        }
-        if (e.getKeyCode()==KeyEvent.VK_RIGHT) {
-            xAngle += dAngle;
-            updateRotation();
-        }
-        if (e.getKeyCode()==KeyEvent.VK_UP) {
-            yAngle -= dAngle;
-            updateRotation();
-        }
-        if (e.getKeyCode()==KeyEvent.VK_DOWN) {
-            yAngle += dAngle;
-            updateRotation();
-        }
-        if (e.getKeyCode()==KeyEvent.VK_SPACE) {
-            yAngle = 0;
-            xAngle = 0;
-            updateRotation();
-        }
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-
     }
 }
